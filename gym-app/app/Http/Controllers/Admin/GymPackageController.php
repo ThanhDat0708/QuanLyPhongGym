@@ -8,10 +8,23 @@ use Illuminate\Http\Request;
 
 class GymPackageController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = trim((string) $request->query('q', ''));
+
+        $packages = GymPackage::latest();
+
+        if ($search !== '') {
+            $packages->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('duration', 'like', "%{$search}%");
+            });
+        }
+
         return view('admin.packages.index', [
-            'packages' => GymPackage::latest()->get(),
+            'packages' => $packages->get(),
+            'search' => $search,
         ]);
     }
 
@@ -31,7 +44,7 @@ class GymPackageController extends Controller
 
         GymPackage::create($validated);
 
-        return back()->with('success', 'Da tao goi tap.');
+        return redirect()->route('admin.packages.index')->with('success', 'Da tao goi tap.');
     }
 
     public function update(Request $request, GymPackage $package)
@@ -45,7 +58,7 @@ class GymPackageController extends Controller
 
         $package->update($validated);
 
-        return back()->with('success', 'Da cap nhat goi tap.');
+        return redirect()->route('admin.packages.index')->with('success', 'Da cap nhat goi tap.');
     }
 
     public function edit(GymPackage $package)

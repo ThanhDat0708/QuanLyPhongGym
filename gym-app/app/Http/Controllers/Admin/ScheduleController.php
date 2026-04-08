@@ -10,12 +10,33 @@ use Illuminate\Http\Request;
 
 class ScheduleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = trim((string) $request->query('q', ''));
+
+        $schedules = Schedule::with(['member.user', 'trainer.user'])->orderBy('date')->orderBy('time');
+
+        if ($search !== '') {
+            $schedules->where(function ($query) use ($search) {
+                $query->where('date', 'like', "%{$search}%")
+                    ->orWhere('time', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhereHas('member.user', function ($memberQuery) use ($search) {
+                        $memberQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('trainer.user', function ($trainerQuery) use ($search) {
+                        $trainerQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+            });
+        }
+
         return view('admin.schedules.index', [
-            'schedules' => Schedule::with(['member.user', 'trainer.user'])->orderBy('date')->orderBy('time')->get(),
+            'schedules' => $schedules->get(),
             'members' => Member::with('user')->get(),
             'trainers' => Trainer::with('user')->get(),
+            'search' => $search,
         ]);
     }
 
@@ -34,12 +55,12 @@ class ScheduleController extends Controller
             'trainer_id' => ['required', 'exists:trainers,id'],
             'date' => ['required', 'date'],
             'time' => ['required'],
-            'status' => ['required', 'string', 'max:20'],
+            'status' => ['required', 'in:pending,done,cancel'],
         ]);
 
         Schedule::create($validated);
 
-        return back()->with('success', 'Da tao lich tap.');
+        return redirect()->route('admin.schedules.index')->with('success', 'Da tao lich tap.');
     }
 
     public function update(Request $request, Schedule $schedule)
@@ -47,12 +68,12 @@ class ScheduleController extends Controller
         $validated = $request->validate([
             'date' => ['required', 'date'],
             'time' => ['required'],
-            'status' => ['required', 'string', 'max:20'],
+            'status' => ['required', 'in:pending,done,cancel'],
         ]);
 
         $schedule->update($validated);
 
-        return back()->with('success', 'Da cap nhat lich tap.');
+        return redirect()->route('admin.schedules.index')->with('success', 'Da cap nhat lich tap.');
     }
 
     public function edit(Schedule $schedule)

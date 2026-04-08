@@ -16,7 +16,10 @@
             --surface: #ffffff;
         }
         body {
-            background: radial-gradient(circle at top left, #f7fafc 0, var(--page-bg) 48%, #dde7f2 100%);
+            background:
+                radial-gradient(circle at 8% 12%, rgba(14, 165, 233, 0.14), transparent 32%),
+                radial-gradient(circle at 88% 8%, rgba(249, 115, 22, 0.14), transparent 34%),
+                linear-gradient(165deg, #f8fbff 0%, #eef3fa 42%, #e5edf7 100%);
             min-height: 100vh;
         }
         .admin-shell {
@@ -76,6 +79,21 @@
             padding: 1.25rem;
             box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
         }
+
+        .content-card {
+            animation: content-fade 0.45s ease;
+        }
+
+        @keyframes content-fade {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
         .hero-chip {
             display: inline-flex;
             align-items: center;
@@ -98,14 +116,14 @@
     <aside class="admin-sidebar">
         <div class="brand-badge mb-4">Quản trị Gym</div>
         <div class="small text-uppercase text-secondary mb-2">Điều hướng</div>
-        <a class="side-link" href="{{ route('admin.dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Tổng quan</a>
-        <a class="side-link" href="{{ route('admin.members.index') }}"><i class="fa-solid fa-users"></i> Hội viên</a>
-        <a class="side-link" href="{{ route('admin.trainers.index') }}"><i class="fa-solid fa-dumbbell"></i> Huấn luyện viên</a>
-        <a class="side-link" href="{{ route('admin.packages.index') }}"><i class="fa-solid fa-box-open"></i> Gói tập</a>
-        <a class="side-link" href="{{ route('admin.registrations.index') }}"><i class="fa-solid fa-clipboard-list"></i> Đăng ký</a>
-        <a class="side-link" href="{{ route('admin.schedules.index') }}"><i class="fa-solid fa-calendar-check"></i> Lịch tập</a>
-        <a class="side-link" href="{{ route('admin.payments.index') }}"><i class="fa-solid fa-receipt"></i> Thanh toán</a>
-        <a class="side-link" href="{{ route('admin.reviews.index') }}"><i class="fa-solid fa-star"></i> Đánh giá</a>
+        <a class="side-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Tổng quan</a>
+        <a class="side-link {{ request()->routeIs('admin.members.*') ? 'active' : '' }}" href="{{ route('admin.members.index') }}"><i class="fa-solid fa-users"></i> Hội viên</a>
+        <a class="side-link {{ request()->routeIs('admin.trainers.*') ? 'active' : '' }}" href="{{ route('admin.trainers.index') }}"><i class="fa-solid fa-dumbbell"></i> Huấn luyện viên</a>
+        <a class="side-link {{ request()->routeIs('admin.packages.*') ? 'active' : '' }}" href="{{ route('admin.packages.index') }}"><i class="fa-solid fa-box-open"></i> Gói tập</a>
+        <a class="side-link {{ request()->routeIs('admin.registrations.*') ? 'active' : '' }}" href="{{ route('admin.registrations.index') }}"><i class="fa-solid fa-clipboard-list"></i> Đăng ký</a>
+        <a class="side-link {{ request()->routeIs('admin.schedules.*') ? 'active' : '' }}" href="{{ route('admin.schedules.index') }}"><i class="fa-solid fa-calendar-check"></i> Lịch tập</a>
+        <a class="side-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" href="{{ route('admin.payments.index') }}"><i class="fa-solid fa-receipt"></i> Thanh toán</a>
+        <a class="side-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}" href="{{ route('admin.reviews.index') }}"><i class="fa-solid fa-star"></i> Đánh giá</a>
         <hr class="border-secondary my-4">
         <div class="small text-secondary mb-2">Phiên đăng nhập</div>
         <div class="mb-2 fw-semibold">{{ auth()->user()->name }}</div>
@@ -123,7 +141,7 @@
                 <h1 class="h4 mb-0">Quản lý phòng gym</h1>
             </div>
             <div class="text-end small text-white-50">
-                {{ now()->format('d/m/Y H:i') }}
+                Hệ thống quản trị
             </div>
         </div>
 

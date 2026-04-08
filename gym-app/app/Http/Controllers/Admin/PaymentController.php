@@ -9,13 +9,42 @@ use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = trim((string) $request->query('q', ''));
+
+        $payments = Payment::with('registration.member.user', 'registration.gymPackage')->latest();
+
+        if ($search !== '') {
+            $invoiceNumber = null;
+            if (preg_match('/^(HD-)?0*([0-9]+)$/i', $search, $matches)) {
+                $invoiceNumber = (int) $matches[2];
+            }
+
+            $payments->where(function ($query) use ($search, $invoiceNumber) {
+                $query->where('status', 'like', "%{$search}%")
+                    ->orWhere('method', 'like', "%{$search}%")
+                    ->orWhere('amount', 'like', "%{$search}%")
+                    ->orWhereHas('registration.member.user', function ($memberQuery) use ($search) {
+                        $memberQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('registration.gymPackage', function ($packageQuery) use ($search) {
+                        $packageQuery->where('name', 'like', "%{$search}%");
+                    });
+
+                if ($invoiceNumber !== null) {
+                    $query->orWhere('id', $invoiceNumber);
+                }
+            });
+        }
+
         return view('admin.payments.index', [
-            'payments' => Payment::with('registration.member.user', 'registration.gymPackage')->latest()->get(),
+            'payments' => $payments->get(),
             'registrations' => Registration::with('member.user', 'gymPackage')
                 ->whereDoesntHave('payment')
                 ->get(),
+            'search' => $search,
         ]);
     }
 
@@ -41,7 +70,7 @@ class PaymentController extends Controller
 
         Payment::create($validated);
 
-        return back()->with('success', 'Da tao thanh toan.');
+        return redirect()->route('admin.payments.index')->with('success', 'Da tao thanh toan.');
     }
 
     public function update(Request $request, Payment $payment)
@@ -56,7 +85,7 @@ class PaymentController extends Controller
 
         $payment->update($validated);
 
-        return back()->with('success', 'Da cap nhat thanh toan.');
+        return redirect()->route('admin.payments.index')->with('success', 'Da cap nhat thanh toan.');
     }
 
     public function edit(Payment $payment)

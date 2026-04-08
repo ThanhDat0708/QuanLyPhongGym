@@ -9,12 +9,24 @@ use App\Models\Registration;
 use App\Models\Schedule;
 use App\Models\Trainer;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Schema;
 
 class RegistrationController extends Controller
 {
     public function create(Request $request, GymPackage $gymPackage)
     {
+        $member = Member::firstOrCreate(
+            ['user_id' => $request->user()->id],
+            ['status' => 'active']
+        );
+
+        if (! $this->hasCompletedPersonalInfo($member)) {
+            return redirect()->route('site.personal-info')->withErrors([
+                'profile' => 'Vui lòng cập nhật đầy đủ thông tin cá nhân trước khi đăng ký gói tập.',
+            ]);
+        }
+
         return view('site.package-register-confirm', [
             'gymPackage' => $gymPackage,
             'today' => now()->toDateString(),
@@ -37,6 +49,12 @@ class RegistrationController extends Controller
             ['user_id' => $request->user()->id],
             ['status' => 'active']
         );
+
+        if (! $this->hasCompletedPersonalInfo($member)) {
+            return redirect()->route('site.personal-info')->withErrors([
+                'profile' => 'Vui lòng cập nhật đầy đủ thông tin cá nhân trước khi đăng ký gói tập.',
+            ]);
+        }
 
         $startDate = $validated['start_date'] ?? now()->toDateString();
 
@@ -107,12 +125,33 @@ class RegistrationController extends Controller
         }
 
         $validated = $request->validate([
-            'trainer_id' => ['required', 'exists:trainers,id'],
+            'trainer_id' => ['nullable', 'exists:trainers,id'],
             'date' => ['required', 'date', 'after_or_equal:today'],
             'time' => ['required'],
         ]);
 
-        $trainer = Trainer::findOrFail($validated['trainer_id']);
+        $trainerId = $validated['trainer_id'] ?? $registration->preferred_trainer_id;
+        if (! $trainerId) {
+            return back()->withErrors(['trainer_id' => 'Vui lòng chọn huấn luyện viên.']);
+        }
+
+        $trainer = Trainer::where('id', $trainerId)
+            ->where('status', 'active')
+            ->first();
+
+        if (! $trainer) {
+            return back()->withErrors(['trainer_id' => 'Huấn luyện viên không khả dụng.']);
+        }
+
+        $isBusy = Schedule::where('trainer_id', $trainer->id)
+            ->whereDate('date', $validated['date'])
+            ->where('time', $validated['time'])
+            ->where('status', '!=', 'cancel')
+            ->exists();
+
+        if ($isBusy) {
+            return back()->withErrors(['trainer_id' => 'Huấn luyện viên này đang bận ở khung giờ bạn chọn. Vui lòng chọn PT khác.']);
+        }
 
         Schedule::create([
             'member_id' => $member->id,
@@ -123,5 +162,64 @@ class RegistrationController extends Controller
         ]);
 
         return back()->with('success', 'Đã tạo lịch tập với huấn luyện viên. Vui lòng chờ xác nhận.');
+    }
+
+    public function availableTrainers(Request $request, Registration $registration): JsonResponse
+    {
+        $member = $request->user()->member;
+        abort_if(! $member || $registration->member_id !== $member->id, 403);
+
+        $validated = $request->validate([
+            'date' => ['required', 'date'],
+            'time' => ['required'],
+        ]);
+
+        $trainers = Trainer::with('user')
+            ->where('status', 'active')
+            ->whereDoesntHave('schedules', function ($query) use ($validated) {
+                $query->whereDate('date', $validated['date'])
+                    ->where('time', $validated['time'])
+                    ->where('status', '!=', 'cancel');
+            })
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($trainer) => [
+                'id' => $trainer->id,
+                'name' => $trainer->user->name,
+                'specialty' => $trainer->specialty,
+            ])
+            ->values();
+
+        return response()->json($trainers);
+    }
+
+    public function pay(Request $request, Payment $payment)
+    {
+        $member = $request->user()->member;
+
+        abort_if(! $member || $payment->registration->member_id !== $member->id, 403);
+
+        if ($payment->status !== 'pending') {
+            return back()->withErrors(['payment' => 'Hóa đơn này không thể thanh toán thêm.']);
+        }
+
+        $payment->update([
+            'status' => 'paid',
+            'payment_date' => now()->toDateString(),
+        ]);
+
+        if ($payment->registration->status === 'pending') {
+            $payment->registration->update(['status' => 'paid']);
+        }
+
+        return back()->with('success', 'Thanh toán hóa đơn thành công.');
+    }
+
+    private function hasCompletedPersonalInfo(Member $member): bool
+    {
+        return ! empty($member->phone)
+            && ! empty($member->address)
+            && ! is_null($member->height)
+            && ! is_null($member->weight);
     }
 }

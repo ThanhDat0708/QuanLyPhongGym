@@ -95,6 +95,22 @@ class DatabaseSeeder extends Seeder
             'role' => 'staff',
         ]);
 
+        $trainerUser5 = User::firstOrCreate([
+            'email' => 'trainer5@gym.local',
+        ], [
+            'name' => 'Phạm Gia Coach',
+            'password' => Hash::make('password'),
+            'role' => 'staff',
+        ]);
+
+        $trainerUser6 = User::firstOrCreate([
+            'email' => 'trainer6@gym.local',
+        ], [
+            'name' => 'Bùi Khánh Coach',
+            'password' => Hash::make('password'),
+            'role' => 'staff',
+        ]);
+
         $memberUser->member()->firstOrCreate([], [
             'phone' => '0900000001',
             'address' => 'Quận 1, TP.HCM',
@@ -159,6 +175,22 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
         ]);
 
+        Trainer::firstOrCreate([
+            'user_id' => $trainerUser5->id,
+        ], [
+            'experience' => 2,
+            'specialty' => 'Cardio & giảm mỡ',
+            'status' => 'active',
+        ]);
+
+        Trainer::firstOrCreate([
+            'user_id' => $trainerUser6->id,
+        ], [
+            'experience' => 7,
+            'specialty' => 'Tăng cơ chuyên sâu',
+            'status' => 'active',
+        ]);
+
         $package1 = GymPackage::firstOrCreate([
             'name' => 'Gói 1 Tháng',
         ], [
@@ -197,6 +229,30 @@ class DatabaseSeeder extends Seeder
             'price' => 3000000,
             'duration' => 60,
             'description' => 'Khóa tập có huấn luyện viên riêng 10 buổi.',
+        ]);
+
+        $package6 = GymPackage::firstOrCreate([
+            'name' => 'Gói 1 Buổi',
+        ], [
+            'price' => 120000,
+            'duration' => 1,
+            'description' => 'Lựa chọn thử nhanh cho khách hàng mới.',
+        ]);
+
+        $package7 = GymPackage::firstOrCreate([
+            'name' => 'Gói 12 Tháng VIP',
+        ], [
+            'price' => 5800000,
+            'duration' => 365,
+            'description' => 'Gói cao cấp, ưu đãi lớn và ưu tiên lịch tập.',
+        ]);
+
+        $package8 = GymPackage::firstOrCreate([
+            'name' => 'Gói Cặp Đôi',
+        ], [
+            'price' => 1900000,
+            'duration' => 60,
+            'description' => 'Dành cho 2 người tập cùng, giá tốt hơn.',
         ]);
 
         $registration1 = Registration::firstOrCreate([
@@ -244,6 +300,33 @@ class DatabaseSeeder extends Seeder
             'status' => 'pending',
         ]);
 
+        $registration6 = Registration::firstOrCreate([
+            'member_id' => $memberUser2->member->id,
+            'gym_package_id' => $package6->id,
+        ], [
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDay()->toDateString(),
+            'status' => 'active',
+        ]);
+
+        $registration7 = Registration::firstOrCreate([
+            'member_id' => $memberUser3->member->id,
+            'gym_package_id' => $package7->id,
+        ], [
+            'start_date' => now()->subDays(15)->toDateString(),
+            'end_date' => now()->addDays(350)->toDateString(),
+            'status' => 'active',
+        ]);
+
+        $registration8 = Registration::firstOrCreate([
+            'member_id' => $memberUser4->member->id,
+            'gym_package_id' => $package8->id,
+        ], [
+            'start_date' => now()->subDays(1)->toDateString(),
+            'end_date' => now()->addDays(59)->toDateString(),
+            'status' => 'pending',
+        ]);
+
         Payment::firstOrCreate([
             'registration_id' => $registration1->id,
         ], [
@@ -285,6 +368,33 @@ class DatabaseSeeder extends Seeder
         ], [
             'amount' => $package5->price,
             'method' => 'cash',
+            'status' => 'pending',
+            'payment_date' => null,
+        ]);
+
+        Payment::firstOrCreate([
+            'registration_id' => $registration6->id,
+        ], [
+            'amount' => $package6->price,
+            'method' => 'invoice',
+            'status' => 'paid',
+            'payment_date' => now()->toDateString(),
+        ]);
+
+        Payment::firstOrCreate([
+            'registration_id' => $registration7->id,
+        ], [
+            'amount' => $package7->price,
+            'method' => 'invoice',
+            'status' => 'paid',
+            'payment_date' => now()->subDays(14)->toDateString(),
+        ]);
+
+        Payment::firstOrCreate([
+            'registration_id' => $registration8->id,
+        ], [
+            'amount' => $package8->price,
+            'method' => 'invoice',
             'status' => 'pending',
             'payment_date' => null,
         ]);

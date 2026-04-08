@@ -56,6 +56,7 @@
                 <th>Số tiền</th>
                 <th>Trạng thái</th>
                 <th>Ngày thanh toán</th>
+                <th>Thao tác</th>
             </tr>
         </thead>
         <tbody>
@@ -76,10 +77,17 @@
                         </span>
                     </td>
                     <td>{{ $item->payment_date?->format('d/m/Y') ?? 'Chưa cập nhật' }}</td>
+                    <td>
+                        @if ($item->status === 'pending')
+                            <a href="{{ route('site.payments.invoice', $item) }}" class="btn btn-sm btn-success">Thanh toán</a>
+                        @else
+                            <a href="{{ route('site.payments.invoice', $item) }}" class="btn btn-sm btn-outline-secondary">Xem hóa đơn</a>
+                        @endif
+                    </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="text-center py-4 text-muted">Bạn chưa có hóa đơn nào.</td>
+                    <td colspan="6" class="text-center py-4 text-muted">Bạn chưa có hóa đơn nào.</td>
                 </tr>
             @endforelse
         </tbody>

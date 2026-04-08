@@ -60,6 +60,7 @@
         .gym-nav {
             background: linear-gradient(110deg, #121923 0%, #1b2531 100%);
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
         }
 
         .gym-nav .navbar-brand {
@@ -86,23 +87,28 @@
     </style>
 </head>
 <body class="{{ request()->routeIs('home') ? 'gym-home-bg' : '' }}">
-<nav class="navbar navbar-expand-lg navbar-dark gym-nav">
+<nav class="navbar navbar-expand-lg navbar-dark gym-nav sticky-top">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="{{ route('home') }}">QUẢN LÝ GYM</a>
+        <a class="navbar-brand fw-bold" href="{{ auth()->check() && auth()->user()->role === 'admin' ? route('admin.dashboard') : route('home') }}">QUẢN LÝ GYM</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navMain">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Gói tập</a></li>
                 @auth
-                    <li class="nav-item"><a class="nav-link" href="{{ route('dashboard') }}">Tổng quan</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('site.registrations') }}">Đăng ký</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('site.schedules') }}">Lịch tập</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('site.payments') }}">Thanh toán</a></li>
                     @if(auth()->user()->role === 'admin')
                         <li class="nav-item"><a class="nav-link text-warning" href="{{ route('admin.dashboard') }}">Quản trị</a></li>
+                    @elseif(auth()->user()->role === 'staff')
+                        <li class="nav-item"><a class="nav-link text-warning" href="{{ route('trainer.today-schedules') }}">Lịch hôm nay</a></li>
+                    @else
+                        <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Gói tập</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('site.registrations') }}">Đăng ký</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('site.schedules') }}">Lịch tập</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('site.payments') }}">Thanh toán</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('site.personal-info') }}">Thông tin cá nhân</a></li>
                     @endif
+                @else
+                    <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Gói tập</a></li>
                 @endauth
             </ul>
             <div class="d-flex gap-2">

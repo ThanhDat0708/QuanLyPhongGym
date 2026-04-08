@@ -10,10 +10,27 @@ use Illuminate\Support\Facades\Hash;
 
 class MemberController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = trim((string) $request->query('q', ''));
+
+        $members = Member::with('user')->latest();
+
+        if ($search !== '') {
+            $members->where(function ($query) use ($search) {
+                $query->where('phone', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+            });
+        }
+
         return view('admin.members.index', [
-            'members' => Member::with('user')->latest()->get(),
+            'members' => $members->get(),
+            'search' => $search,
         ]);
     }
 
@@ -50,7 +67,7 @@ class MemberController extends Controller
             'status' => $validated['status'],
         ]);
 
-        return back()->with('success', 'Da tao hoi vien.');
+        return redirect()->route('admin.members.index')->with('success', 'Da tao hoi vien.');
     }
 
     public function update(Request $request, Member $member)
@@ -78,7 +95,7 @@ class MemberController extends Controller
             'status' => $validated['status'],
         ]);
 
-        return back()->with('success', 'Da cap nhat hoi vien.');
+        return redirect()->route('admin.members.index')->with('success', 'Da cap nhat hoi vien.');
     }
 
     public function edit(Member $member)

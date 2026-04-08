@@ -10,6 +10,20 @@
     <a href="{{ route('admin.payments.create') }}" class="btn btn-success fw-bold">+ Thêm thanh toán</a>
 </div>
 
+<form class="row g-2 mb-3" method="GET" action="{{ route('admin.payments.index') }}">
+    <div class="col-md-8 col-lg-6">
+        <input type="text" name="q" class="form-control" value="{{ $search }}" placeholder="Tìm mã hóa đơn (HD-000001), hội viên, gói tập, trạng thái...">
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-dark" type="submit">Tìm kiếm</button>
+    </div>
+    @if($search !== '')
+        <div class="col-auto">
+            <a href="{{ route('admin.payments.index') }}" class="btn btn-outline-secondary">Xóa lọc</a>
+        </div>
+    @endif
+</form>
+
 <table class="table table-bordered table-hover align-middle bg-white">
     <thead class="table-dark">
         <tr><th>Mã hóa đơn</th><th>Hội viên</th><th>Gói tập</th><th>Số tiền</th><th>Trạng thái</th><th>Ngày thanh toán</th><th>Thao tác</th></tr>

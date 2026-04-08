@@ -5,14 +5,28 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <div class="text-uppercase text-info fw-bold small">Hội viên</div>
-        <h1 class="h4 mb-0">Quan ly hoi vien</h1>
+        <h1 class="h4 mb-0">Quản lý hội viên</h1>
     </div>
     <a href="{{ route('admin.members.create') }}" class="btn btn-success fw-bold">+ Thêm hội viên</a>
 </div>
 
+<form class="row g-2 mb-3" method="GET" action="{{ route('admin.members.index') }}">
+    <div class="col-md-8 col-lg-6">
+        <input type="text" name="q" class="form-control" value="{{ $search }}" placeholder="Tìm tên, email, số điện thoại, địa chỉ, trạng thái...">
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-dark" type="submit">Tìm kiếm</button>
+    </div>
+    @if($search !== '')
+        <div class="col-auto">
+            <a href="{{ route('admin.members.index') }}" class="btn btn-outline-secondary">Xóa lọc</a>
+        </div>
+    @endif
+</form>
+
 <table class="table table-bordered table-hover align-middle bg-white">
     <thead class="table-dark">
-        <tr><th>Ten</th><th>Email</th><th>Phone</th><th>Address</th><th>Height</th><th>Weight</th><th>Status</th><th>Actions</th></tr>
+        <tr><th>Tên</th><th>Email</th><th>Số điện thoại</th><th>Địa chỉ</th><th>Chiều cao</th><th>Cân nặng</th><th>Trạng thái</th><th>Thao tác</th></tr>
     </thead>
     <tbody>
     @foreach ($members as $member)

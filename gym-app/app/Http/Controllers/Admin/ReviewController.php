@@ -10,12 +10,32 @@ use Illuminate\Http\Request;
 
 class ReviewController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = trim((string) $request->query('q', ''));
+
+        $reviews = Review::with(['user', 'trainer.user'])->latest();
+
+        if ($search !== '') {
+            $reviews->where(function ($query) use ($search) {
+                $query->where('comment', 'like', "%{$search}%")
+                    ->orWhere('rating', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('trainer.user', function ($trainerQuery) use ($search) {
+                        $trainerQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+            });
+        }
+
         return view('admin.reviews.index', [
-            'reviews' => Review::with(['user', 'trainer.user'])->latest()->get(),
+            'reviews' => $reviews->get(),
             'users' => User::orderBy('name')->get(),
             'trainers' => Trainer::with('user')->get(),
+            'search' => $search,
         ]);
     }
 
@@ -38,7 +58,7 @@ class ReviewController extends Controller
 
         Review::create($validated);
 
-        return back()->with('success', 'Da tao danh gia.');
+        return redirect()->route('admin.reviews.index')->with('success', 'Da tao danh gia.');
     }
 
     public function update(Request $request, Review $review)
@@ -50,7 +70,7 @@ class ReviewController extends Controller
 
         $review->update($validated);
 
-        return back()->with('success', 'Da cap nhat danh gia.');
+        return redirect()->route('admin.reviews.index')->with('success', 'Da cap nhat danh gia.');
     }
 
     public function edit(Review $review)

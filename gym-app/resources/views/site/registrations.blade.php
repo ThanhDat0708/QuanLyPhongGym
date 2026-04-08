@@ -25,16 +25,19 @@
                         @endif
 
                         @if (in_array($item->status, ['paid', 'active']))
-                            <form action="{{ route('site.registrations.schedule', $item) }}" method="POST" class="d-grid gap-2">
+                            <form
+                                action="{{ route('site.registrations.schedule', $item) }}"
+                                method="POST"
+                                class="d-grid gap-2 schedule-form"
+                                data-available-url="{{ route('site.registrations.available-trainers', $item) }}"
+                                data-preferred-trainer-id="{{ $item->preferred_trainer_id }}"
+                            >
                                 @csrf
-                                <select name="trainer_id" class="form-select form-select-sm" required>
-                                    <option value="">Chọn PT</option>
-                                    @foreach ($trainers as $trainer)
-                                        <option value="{{ $trainer->id }}">{{ $trainer->user->name }} - {{ $trainer->specialty }}</option>
-                                    @endforeach
+                                <input type="date" name="date" class="form-control form-control-sm js-date" min="{{ now()->toDateString() }}" required>
+                                <input type="time" name="time" class="form-control form-control-sm js-time" required>
+                                <select name="trainer_id" class="form-select form-select-sm js-trainer" required disabled>
+                                    <option value="">Chọn ngày và giờ trước</option>
                                 </select>
-                                <input type="date" name="date" class="form-control form-control-sm" min="{{ now()->toDateString() }}" required>
-                                <input type="time" name="time" class="form-control form-control-sm" required>
                                 <button type="submit" class="btn btn-sm btn-outline-primary">Đặt lịch với PT</button>
                             </form>
                         @endif
@@ -46,4 +49,67 @@
         </tbody>
     </table>
 </div>
+
+<script>
+document.querySelectorAll('.schedule-form').forEach(function (form) {
+    const dateInput = form.querySelector('.js-date');
+    const timeInput = form.querySelector('.js-time');
+    const trainerSelect = form.querySelector('.js-trainer');
+    const availableUrl = form.dataset.availableUrl;
+    const preferredTrainerId = form.dataset.preferredTrainerId;
+
+    const loadAvailableTrainers = async function () {
+        const date = dateInput.value;
+        const time = timeInput.value;
+
+        if (!date || !time) {
+            trainerSelect.innerHTML = '<option value="">Chọn ngày và giờ trước</option>';
+            trainerSelect.disabled = true;
+            return;
+        }
+
+        trainerSelect.disabled = true;
+        trainerSelect.innerHTML = '<option value="">Đang tải PT trống lịch...</option>';
+
+        try {
+            const response = await fetch(availableUrl + '?date=' + encodeURIComponent(date) + '&time=' + encodeURIComponent(time));
+            if (!response.ok) {
+                throw new Error('Không thể tải danh sách PT.');
+            }
+
+            const trainers = await response.json();
+            trainerSelect.innerHTML = '';
+
+            if (!trainers.length) {
+                trainerSelect.innerHTML = '<option value="">Không có PT trống ở khung giờ này</option>';
+                trainerSelect.disabled = true;
+                return;
+            }
+
+            trainerSelect.innerHTML = '<option value="">Chọn PT</option>';
+            trainers.forEach(function (trainer) {
+                const option = document.createElement('option');
+                option.value = trainer.id;
+                option.textContent = trainer.name + ' - ' + (trainer.specialty || 'Tổng quát');
+                trainerSelect.appendChild(option);
+            });
+
+            if (preferredTrainerId) {
+                const preferredOption = trainerSelect.querySelector('option[value="' + preferredTrainerId + '"]');
+                if (preferredOption) {
+                    trainerSelect.value = preferredTrainerId;
+                }
+            }
+
+            trainerSelect.disabled = false;
+        } catch (error) {
+            trainerSelect.innerHTML = '<option value="">Không tải được danh sách PT</option>';
+            trainerSelect.disabled = true;
+        }
+    };
+
+    dateInput.addEventListener('change', loadAvailableTrainers);
+    timeInput.addEventListener('change', loadAvailableTrainers);
+});
+</script>
 @endsection

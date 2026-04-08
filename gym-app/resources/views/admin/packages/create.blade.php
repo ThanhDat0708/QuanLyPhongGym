@@ -11,10 +11,10 @@
 
 <form method="POST" action="{{ route('admin.packages.store') }}" class="row g-3">
     @csrf
-    <div class="col-md-6"><label class="form-label">Name</label><input class="form-control" name="name" required></div>
-    <div class="col-md-6"><label class="form-label">Price</label><input class="form-control" name="price" type="number" step="0.01" required></div>
-    <div class="col-md-6"><label class="form-label">Duration</label><input class="form-control" name="duration" type="number" required></div>
-    <div class="col-md-12"><label class="form-label">Description</label><textarea class="form-control" name="description" rows="4"></textarea></div>
+    <div class="col-md-6"><label class="form-label">Tên gói</label><input class="form-control" name="name" required></div>
+    <div class="col-md-6"><label class="form-label">Giá</label><input class="form-control" name="price" type="number" step="0.01" required></div>
+    <div class="col-md-6"><label class="form-label">Thời hạn</label><input class="form-control" name="duration" type="number" required></div>
+    <div class="col-md-12"><label class="form-label">Mô tả</label><textarea class="form-control" name="description" rows="4"></textarea></div>
     <div class="col-12"><button class="btn btn-success px-4">Lưu gói tập</button></div>
 </form>
 @endsection

@@ -1,22 +1,50 @@
 @extends('layouts.admin')
 
 @section('content')
+@php($statusLabels = trans('statuses'))
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <div class="text-uppercase text-info fw-bold small">Huấn luyện viên</div>
-        <h2 class="h4 mb-0">Sửa huấn luyện viên</h2>
+        <div class="text-uppercase fw-bold small" style="color:#0891b2; letter-spacing:.08em;">Huấn luyện viên</div>
+        <h2 class="h3 mb-1">Sửa huấn luyện viên</h2>
+        <div class="text-secondary">Cập nhật thông tin và trạng thái PT.</div>
     </div>
     <a href="{{ route('admin.trainers.index') }}" class="btn btn-outline-secondary">Về danh sách</a>
 </div>
 
-<form method="POST" action="{{ route('admin.trainers.update', $trainer) }}" class="row g-3">
+<form method="POST" action="{{ route('admin.trainers.update', $trainer) }}" class="card border-0 shadow-sm">
     @csrf
     @method('PUT')
-    <div class="col-md-6"><label class="form-label">Name</label><input class="form-control" name="name" value="{{ $trainer->user->name }}" required></div>
-    <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" name="email" type="email" value="{{ $trainer->user->email }}" required></div>
-    <div class="col-md-6"><label class="form-label">Experience</label><input class="form-control" name="experience" type="number" value="{{ $trainer->experience }}" required></div>
-    <div class="col-md-6"><label class="form-label">Status</label><input class="form-control" name="status" value="{{ $trainer->status }}" required></div>
-    <div class="col-12"><label class="form-label">Specialty</label><input class="form-control" name="specialty" value="{{ $trainer->specialty }}"></div>
-    <div class="col-12"><button class="btn btn-warning px-4 fw-bold">Cập nhật huấn luyện viên</button></div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Họ tên</label>
+                <input class="form-control" name="name" value="{{ old('name', $trainer->user->name) }}" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input class="form-control" name="email" type="email" value="{{ old('email', $trainer->user->email) }}" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Kinh nghiệm (năm)</label>
+                <input class="form-control" name="experience" type="number" min="0" value="{{ old('experience', $trainer->experience) }}" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Trạng thái</label>
+                <select class="form-select" name="status" required>
+                    @foreach (['active', 'inactive'] as $status)
+                        <option value="{{ $status }}" @selected(old('status', $trainer->status) === $status)>{{ $statusLabels[$status] ?? $status }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Chuyên môn</label>
+                <input class="form-control" name="specialty" value="{{ old('specialty', $trainer->specialty) }}" placeholder="Ví dụ: Giảm mỡ, tăng cơ, cardio...">
+            </div>
+        </div>
+    </div>
+    <div class="card-footer bg-white border-0 d-flex justify-content-end gap-2">
+        <a href="{{ route('admin.trainers.index') }}" class="btn btn-outline-secondary">Hủy</a>
+        <button class="btn btn-warning px-4 fw-bold">Cập nhật huấn luyện viên</button>
+    </div>
 </form>
 @endsection

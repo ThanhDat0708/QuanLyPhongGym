@@ -103,7 +103,7 @@
                             <p class="mb-1"><span class="label">Giá:</span> <span class="value">{{ number_format($package->price) }} VND</span></p>
                             <p class="mb-3"><span class="label">Thời hạn:</span> <span class="value">{{ $package->duration }} ngày</span></p>
                             @auth
-                                <a href="{{ route('site.package.register.confirm', $package) }}" class="btn btn-warning btn-sm fw-semibold">Chọn và xác nhận đăng ký</a>
+                                <a href="{{ route('site.package.register.confirm', $package) }}" class="btn btn-warning btn-sm fw-semibold">Xác nhận đăng ký</a>
                             @else
                                 <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Đăng nhập để đăng ký</a>
                             @endauth

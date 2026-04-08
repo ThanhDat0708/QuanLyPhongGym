@@ -10,10 +10,29 @@ use Illuminate\Support\Facades\Hash;
 
 class TrainerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = trim((string) $request->query('q', ''));
+
+        $trainers = Trainer::with('user')->latest();
+
+        if ($search !== '') {
+            $trainers->where(function ($query) use ($search) {
+                $query->where('specialty', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+            });
+        }
+
         return view('admin.trainers.index', [
-            'trainers' => Trainer::with('user')->latest()->get(),
+            'trainers' => $trainers->get(),
+            'search' => $search,
+            'totalCount' => Trainer::count(),
+            'activeCount' => Trainer::where('status', 'active')->count(),
+            'inactiveCount' => Trainer::where('status', 'inactive')->count(),
         ]);
     }
 
@@ -30,7 +49,7 @@ class TrainerController extends Controller
             'password' => ['required', 'string', 'min:6'],
             'experience' => ['required', 'integer', 'min:0'],
             'specialty' => ['nullable', 'string', 'max:255'],
-            'status' => ['required', 'string', 'max:20'],
+            'status' => ['required', 'in:active,inactive'],
         ]);
 
         $user = User::create([
@@ -46,7 +65,7 @@ class TrainerController extends Controller
             'status' => $validated['status'],
         ]);
 
-        return back()->with('success', 'Da tao huan luyen vien.');
+        return redirect()->route('admin.trainers.index')->with('success', 'Da tao huan luyen vien.');
     }
 
     public function update(Request $request, Trainer $trainer)
@@ -56,7 +75,7 @@ class TrainerController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$trainer->user_id],
             'experience' => ['required', 'integer', 'min:0'],
             'specialty' => ['nullable', 'string', 'max:255'],
-            'status' => ['required', 'string', 'max:20'],
+            'status' => ['required', 'in:active,inactive'],
         ]);
 
         $trainer->user->update([
@@ -70,7 +89,7 @@ class TrainerController extends Controller
             'status' => $validated['status'],
         ]);
 
-        return back()->with('success', 'Da cap nhat huan luyen vien.');
+        return redirect()->route('admin.trainers.index')->with('success', 'Da cap nhat huan luyen vien.');
     }
 
     public function edit(Trainer $trainer)
@@ -84,6 +103,6 @@ class TrainerController extends Controller
     {
         $trainer->user()->delete();
 
-        return back()->with('success', 'Da xoa huan luyen vien.');
+        return redirect()->route('admin.trainers.index')->with('success', 'Da xoa huan luyen vien.');
     }
 }

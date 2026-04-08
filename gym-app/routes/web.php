@@ -17,16 +17,37 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [SiteController::class, 'index'])->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [SiteController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', function () {
+        if (auth()->user()->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+
+        if (auth()->user()->role === 'staff') {
+            return redirect()->route('trainer.today-schedules');
+        }
+
+        return redirect()->route('site.registrations');
+    })->name('dashboard');
+    Route::get('/my-personal-info', [SiteController::class, 'personalInfo'])->name('site.personal-info');
+    Route::post('/my-personal-info', [SiteController::class, 'updatePersonalInfo'])->name('site.personal-info.update');
     Route::get('/my-registrations', [SiteController::class, 'registrations'])->name('site.registrations');
     Route::get('/my-schedules', [SiteController::class, 'schedules'])->name('site.schedules');
     Route::get('/my-payments', [SiteController::class, 'payments'])->name('site.payments');
+    Route::get('/my-payments/{payment}/invoice', [SiteController::class, 'paymentInvoice'])->name('site.payments.invoice');
+    Route::patch('/my-payments/{payment}/pay', [RegistrationController::class, 'pay'])->name('site.payments.pay');
     Route::get('/packages/{gymPackage}/register', [RegistrationController::class, 'create'])->name('site.package.register.confirm');
     Route::post('/packages/{gymPackage}/register', [RegistrationController::class, 'store'])->name('site.package.register');
     Route::patch('/my-registrations/{registration}/cancel', [RegistrationController::class, 'cancel'])->name('site.registrations.cancel');
+    Route::get('/my-registrations/{registration}/available-trainers', [RegistrationController::class, 'availableTrainers'])->name('site.registrations.available-trainers');
     Route::post('/my-registrations/{registration}/schedules', [RegistrationController::class, 'storeSchedule'])->name('site.registrations.schedule');
     Route::post('/reviews', [ReviewController::class, 'store'])->name('site.reviews.store');
 });
+
+Route::middleware(['auth', 'verified', 'role:staff'])
+    ->group(function () {
+        Route::get('/trainer/today-schedules', [SiteController::class, 'trainerTodaySchedules'])->name('trainer.today-schedules');
+        Route::post('/trainer/registrations/{registration}/auto-schedule', [SiteController::class, 'trainerAutoSchedule'])->name('trainer.auto-schedule');
+    });
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
