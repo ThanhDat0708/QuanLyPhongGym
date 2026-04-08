@@ -105,6 +105,39 @@ class GymModulesTest extends TestCase
         $response->assertDontSee('Goi Tang Co');
     }
 
+    public function test_member_payment_page_hides_canceled_payments(): void
+    {
+        $user = User::factory()->create(['role' => 'member']);
+        $member = Member::create(['user_id' => $user->id, 'status' => 'active']);
+        $package = GymPackage::create([
+            'name' => 'Goi An',
+            'price' => 200000,
+            'duration' => 30,
+            'description' => 'test',
+        ]);
+
+        $registration = Registration::create([
+            'member_id' => $member->id,
+            'gym_package_id' => $package->id,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDays(30)->toDateString(),
+            'status' => 'cancel',
+        ]);
+
+        Payment::create([
+            'registration_id' => $registration->id,
+            'amount' => 200000,
+            'method' => 'invoice',
+            'status' => 'cancel',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('site.payments'));
+
+        $response->assertOk();
+        $response->assertDontSee('HD-');
+        $response->assertSee('Bạn chưa có hóa đơn nào.');
+    }
+
     public function test_member_can_submit_review(): void
     {
         $memberUser = User::factory()->create(['role' => 'member']);

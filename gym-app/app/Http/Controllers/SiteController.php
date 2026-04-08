@@ -87,6 +87,7 @@ class SiteController extends Controller
         $payments = $member
             ? Payment::with('registration.gymPackage')
                 ->whereHas('registration', fn ($q) => $q->where('member_id', $member->id))
+                ->where('status', '!=', 'cancel')
                 ->latest()
                 ->get()
             : collect();
